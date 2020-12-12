@@ -1,28 +1,34 @@
 import pip._vendor.requests as requests
 
+
 def create_query(languages, min_stars=50000):
     query = f'stars:>{min_stars} '
-    for language in languages: 
+    for language in languages:
         query += f'language:{language} '
 
     return query
 
-def repos_with_most_stars(languages):
+
+def repos_with_most_stars(languages, sort='stars', order='desc'):
     API_URL = 'https://api.github.com/search/repositories'
     query = create_query(languages)
-    parameters = {'q': query, "sort": 'stars', 'order': 'desc'}
+    parameters = {'q': query, "sort": sort, 'order': order}
     response = requests.get(API_URL, params=parameters)
-    response_json = response.json()['items']
-    return response_json
-    
+    status_code = response.status_code
+    if status_code != 200:
+        raise RuntimeError(
+            f'An error occured. Github\'s API has probably pooped itself. Status code was {status_code}')
+    else: 
+        response_json = response.json()['items']
+        return response_json
+
 
 if __name__ == '__main__':
     # main method goes here
     languages = ['python', 'javascript']
     results = repos_with_most_stars(languages)
-    for result in results: 
+    for result in results:
         language = result['language']
         stars = result['stargazers_count']
         name = result['name']
         print(f'-> {name} is a {language} repo with {stars} stars')
-
